@@ -1,0 +1,19 @@
+Package: genepixR
+Type: Package
+Title: Client for the Gen-EpiX API
+Version: 0.1.0
+Authors@R: 
+    person("RIVM", email = "bioinformatics@rivm.nl",
+           role = c("aut", "cre", "cph"))
+Description: Provides generic R clients for authenticated Gen-EpiX API
+    endpoints, including shared browser-login helpers and CASEDB case
+    retrieval and phylogenetic-tree requests.
+License: EUPL-1.2
+URL: https://github.com/RIVM-bioinformatics/gen-epix-R
+BugReports: https://github.com/RIVM-bioinformatics/gen-epix-R/issues
+Encoding: UTF-8
+Imports:
+    httr2
+Suggests:
+    chromote
+    
