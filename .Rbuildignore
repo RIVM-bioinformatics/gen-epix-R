@@ -1,5 +1,4 @@
 ^\.git$
 ^\.github$
 ^\.Rproj\.user$
-^tests$
 ^README\.Rmd$

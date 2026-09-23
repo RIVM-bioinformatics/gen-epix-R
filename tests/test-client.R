@@ -1,6 +1,17 @@
-repo_root <- if (dir.exists("R")) "." else ".."
-source(file.path(repo_root, "R", "commondb-client.R"))
-source(file.path(repo_root, "R", "casedb-client.R"))
+if (requireNamespace("genepixR", quietly = TRUE)) {
+    retrieve_cases_by_query <- genepixR::retrieve_cases_by_query
+    retrieve_cases_by_id <- genepixR::retrieve_cases_by_id
+    retrieve_phylogenetic_tree_by_cases <-
+        genepixR::retrieve_phylogenetic_tree_by_cases
+    commondb_url <- genepixR::commondb_url
+    chromote_access_token_value <- genepixR:::chromote_access_token_value
+    read_chromote_access_token_during_login <-
+        genepixR:::read_chromote_access_token_during_login
+} else {
+    repo_root <- if (dir.exists("R")) "." else ".."
+    source(file.path(repo_root, "R", "commondb-client.R"))
+    source(file.path(repo_root, "R", "casedb-client.R"))
+}
 
 record_request <- function(url, body, access_token, timeout_seconds) {
     list(

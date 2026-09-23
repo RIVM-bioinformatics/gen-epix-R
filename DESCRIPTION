@@ -8,7 +8,7 @@ Authors@R:
 Description: Provides generic R clients for authenticated Gen-EpiX API
     endpoints, including shared browser-login helpers and CASEDB case
     retrieval and phylogenetic-tree requests.
-License: EUPL-1.2
+License: file LICENSE
 URL: https://github.com/RIVM-bioinformatics/gen-epix-R
 BugReports: https://github.com/RIVM-bioinformatics/gen-epix-R/issues
 Encoding: UTF-8
