@@ -116,3 +116,37 @@ enabled:
 ```console
 GEN_EPIX_RUN_E2E=true Rscript tests/test-client-e2e.R
 ```
+
+### Automated integration test
+
+`tests/test-integration.R` needs no browser interaction. It authenticates
+with the client-credentials grant, connects to an application as the
+authenticated user, creates, reads, updates, and deletes an organization set
+(CRUD commands), and retrieves the user's permissions (a non-CRUD command). It
+runs only when explicitly enabled.
+
+Its defaults match the `docker-compose.sql.idp.yml` stack of the
+[gen-epix-api](https://github.com/RIVM-bioinformatics/gen-epix-api)
+repository, in which the `mock` OAuth client maps to the root user:
+
+```console
+# In gen-epix-api
+docker compose -f docker-compose.sql.idp.yml up -d --wait
+
+# In gen-epix-R
+GEN_EPIX_RUN_INTEGRATION=true Rscript tests/test-integration.R
+```
+
+Override the defaults to target another application or identity provider:
+
+| Variable | Default |
+| --- | --- |
+| `GEN_EPIX_APP_URL` | `http://localhost:8000` |
+| `GEN_EPIX_OIDC_DISCOVERY_URL` | `http://localhost:8080/.well-known/openid-configuration` |
+| `GEN_EPIX_CLIENT_ID` | `mock` |
+| `GEN_EPIX_CLIENT_SECRET` | `mock` |
+| `GEN_EPIX_OIDC_SCOPE` | none |
+
+The OAuth client must map to a user that may create, update, and delete
+organization sets. For HTTPS endpoints with a self-signed certificate, point
+`CURL_CA_BUNDLE` to that certificate.
