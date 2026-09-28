@@ -124,24 +124,176 @@ commondb_post_json <- function(
     access_token,
     timeout_seconds = 45
 ) {
+    commondb_request_json(
+        url = url,
+        access_token = access_token,
+        method = "POST",
+        body = body,
+        timeout_seconds = timeout_seconds
+    )
+}
+
+require_httr2 <- function() {
     if (!requireNamespace("httr2", quietly = TRUE)) {
         stop("Package 'httr2' is required for HTTP requests.", call. = FALSE)
     }
-    is_valid_access_token <- is.character(access_token) &&
-        length(access_token) == 1L &&
-        nzchar(access_token)
-    if (!is_valid_access_token) {
+}
+
+is_single_string <- function(value) {
+    is.character(value) && length(value) == 1L && !is.na(value) && nzchar(value)
+}
+
+#' Send an authenticated JSON request to a Gen-EpiX endpoint.
+#'
+#' @param url Complete request URL.
+#' @param access_token Bearer access token.
+#' @param method HTTP method, such as `GET`, `POST`, `PUT`, or `DELETE`.
+#' @param body Optional list to encode as a JSON request body.
+#' @param timeout_seconds Request timeout in seconds.
+#' @return The decoded JSON response as an R object, or `NULL` when the
+#'   response has no body.
+#' @export
+commondb_request_json <- function(
+    url,
+    access_token,
+    method = "GET",
+    body = NULL,
+    timeout_seconds = 45
+) {
+    require_httr2()
+    if (!is_single_string(access_token)) {
         stop("A non-empty access token is required.", call. = FALSE)
     }
 
     request <- httr2::request(url)
+    request <- httr2::req_method(request, method)
     request <- httr2::req_headers(
         request,
         Authorization = paste("Bearer", access_token)
     )
-    request <- httr2::req_body_json(request, body, auto_unbox = TRUE)
+    if (!is.null(body)) {
+        request <- httr2::req_body_json(request, body, auto_unbox = TRUE)
+    }
     request <- httr2::req_timeout(request, timeout_seconds)
 
     response <- httr2::req_perform(request)
+    if (!httr2::resp_has_body(response)) {
+        return(NULL)
+    }
     httr2::resp_body_json(response, simplifyVector = FALSE)
+}
+
+#' Obtain an access token with the OAuth 2.0 client-credentials grant.
+#'
+#' The token endpoint is read from the identity provider's OpenID Connect
+#' discovery document. The client authenticates with HTTP Basic credentials,
+#' so no browser interaction is needed; use this for automated jobs and tests.
+#'
+#' @param discovery_url URL of the OpenID Connect discovery document.
+#' @param client_id OAuth client identifier.
+#' @param client_secret OAuth client secret.
+#' @param scope Optional space-separated scopes to request.
+#' @param timeout_seconds Request timeout in seconds.
+#' @return A single access-token string.
+#' @export
+login_with_client_credentials <- function(
+    discovery_url,
+    client_id,
+    client_secret,
+    scope = NULL,
+    timeout_seconds = 45
+) {
+    require_httr2()
+    if (!is_single_string(client_id) || !is_single_string(client_secret)) {
+        stop("A non-empty client ID and client secret are required.", call. = FALSE)
+    }
+
+    discovery_request <- httr2::request(discovery_url)
+    discovery_request <- httr2::req_timeout(discovery_request, timeout_seconds)
+    discovery <- httr2::resp_body_json(httr2::req_perform(discovery_request))
+    token_endpoint <- discovery$token_endpoint
+    if (!is_single_string(token_endpoint)) {
+        stop(
+            "The discovery document does not contain a token endpoint.",
+            call. = FALSE
+        )
+    }
+
+    form <- list(grant_type = "client_credentials")
+    if (!is.null(scope)) {
+        form$scope <- scope
+    }
+    token_request <- httr2::request(token_endpoint)
+    token_request <- httr2::req_auth_basic(token_request, client_id, client_secret)
+    token_request <- do.call(httr2::req_body_form, c(list(token_request), form))
+    token_request <- httr2::req_timeout(token_request, timeout_seconds)
+    token_response <- httr2::resp_body_json(httr2::req_perform(token_request))
+
+    access_token <- token_response$access_token
+    if (!is_single_string(access_token)) {
+        stop("The token response does not contain an access token.", call. = FALSE)
+    }
+    access_token
+}
+
+commondb_get <- function(
+    base_url,
+    path,
+    access_token,
+    timeout_seconds,
+    request_json
+) {
+    request_json(
+        url = commondb_url(base_url, paste0("/v1", path)),
+        access_token = access_token,
+        method = "GET",
+        body = NULL,
+        timeout_seconds = timeout_seconds
+    )
+}
+
+#' Retrieve the authenticated user.
+#'
+#' Every Gen-EpiX application exposes this endpoint, which makes it a cheap
+#' check that the access token is accepted and maps to a registered user.
+#'
+#' @param base_url Gen-EpiX application base URL.
+#' @param access_token Bearer access token.
+#' @param timeout_seconds Request timeout in seconds.
+#' @param request_json Function used to send the request; useful for testing
+#'   or custom HTTP clients.
+#' @return The decoded user object.
+#' @export
+retrieve_user_me <- function(
+    base_url,
+    access_token,
+    timeout_seconds = 45,
+    request_json = commondb_request_json
+) {
+    commondb_get(base_url, "/user_me", access_token, timeout_seconds, request_json)
+}
+
+#' Retrieve the command permissions of the authenticated user.
+#'
+#' @param base_url Gen-EpiX application base URL.
+#' @param access_token Bearer access token.
+#' @param timeout_seconds Request timeout in seconds.
+#' @param request_json Function used to send the request; useful for testing
+#'   or custom HTTP clients.
+#' @return A list of permissions, each with `command_name` and
+#'   `permission_type` fields.
+#' @export
+retrieve_own_permissions <- function(
+    base_url,
+    access_token,
+    timeout_seconds = 45,
+    request_json = commondb_request_json
+) {
+    commondb_get(
+        base_url,
+        "/user_me/permissions",
+        access_token,
+        timeout_seconds,
+        request_json
+    )
 }

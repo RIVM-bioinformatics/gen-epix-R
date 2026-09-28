@@ -48,7 +48,41 @@ cases <- retrieve_cases_by_id(
 ```
 
 For non-interactive jobs, provide an access token through the job's secret
-management and call the client functions directly.
+management and call the client functions directly, or obtain one with the
+OAuth 2.0 client-credentials grant:
+
+```r
+access_token <- login_with_client_credentials(
+    "https://idp.example/.well-known/openid-configuration",
+    client_id = Sys.getenv("GEN_EPIX_CLIENT_ID"),
+    client_secret = Sys.getenv("GEN_EPIX_CLIENT_SECRET")
+)
+```
+
+## Use the generic clients
+
+`retrieve_user_me()` and `retrieve_own_permissions()` work against every
+Gen-EpiX application. The `crud_*()` functions send CRUD commands for any
+entity exposed under `/v1/<entity>`:
+
+```r
+app_url <- "https://casedb.example"
+organization_set <- crud_create(
+    app_url,
+    access_token,
+    "organization_sets",
+    obj = list(name = "Example set")
+)
+crud_read_one(app_url, access_token, "organization_sets", organization_set$id)
+crud_update(
+    app_url,
+    access_token,
+    "organization_sets",
+    organization_set$id,
+    obj = list(name = "Example set", description = "Updated")
+)
+crud_delete(app_url, access_token, "organization_sets", organization_set$id)
+```
 
 ## Retrieve all cases from the command line
 
