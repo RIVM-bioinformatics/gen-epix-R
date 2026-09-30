@@ -3,12 +3,13 @@
 # Unlike tests/test-client-e2e.R, this test needs no browser interaction: it
 # authenticates with the OAuth 2.0 client-credentials grant and then
 # (1) connects to a Gen-EpiX application as the authenticated user,
-# (2) runs a create/read/update/delete cycle of CRUD commands, and
+# (2) runs a create/read/update/delete cycle of CRUD commands and retrieves
+#     the case sets (logging at most the first five), and
 # (3) runs a non-CRUD command.
 #
 # Set GEN_EPIX_RUN_INTEGRATION=true to run it. The defaults match the
 # docker-compose.sql.idp.yml stack of the gen-epix-api repository:
-# - GEN_EPIX_APP_URL: application URL (default http://localhost:8000)
+# - GEN_EPIX_APP_URL: CASEDB application URL (default http://localhost:8000)
 # - GEN_EPIX_OIDC_DISCOVERY_URL: OIDC discovery document
 #   (default http://localhost:8080/.well-known/openid-configuration)
 # - GEN_EPIX_CLIENT_ID / GEN_EPIX_CLIENT_SECRET: OAuth client (default mock)
@@ -142,6 +143,22 @@ if (!identical(Sys.getenv("GEN_EPIX_RUN_INTEGRATION"), "true")) {
         }
     )
     cat("Created, read, updated, and deleted organization set", object_id, "\n")
+
+    max_logged_case_sets <- 5L
+    case_sets <- crud_read_all(app_url, access_token, "case_sets")
+    expect(
+        is.list(case_sets) &&
+            all(vapply(case_sets, function(obj) is_single_string(obj$id), logical(1))),
+        "Retrieving the case sets failed."
+    )
+    cat("Retrieved", length(case_sets), "case sets")
+    if (length(case_sets) > max_logged_case_sets) {
+        cat(", showing the first", max_logged_case_sets)
+    }
+    cat("\n")
+    for (case_set in head(case_sets, max_logged_case_sets)) {
+        cat("  -", case_set$id, case_set$name, "\n")
+    }
 
     # (3) Execute a non-CRUD command.
     permissions <- retrieve_own_permissions(app_url, access_token)

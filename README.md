@@ -122,8 +122,10 @@ GEN_EPIX_RUN_E2E=true Rscript tests/test-client-e2e.R
 `tests/test-integration.R` needs no browser interaction. It authenticates
 with the client-credentials grant, connects to an application as the
 authenticated user, creates, reads, updates, and deletes an organization set
-(CRUD commands), and retrieves the user's permissions (a non-CRUD command). It
-runs only when explicitly enabled.
+and retrieves the case sets, logging at most the first five (CRUD commands),
+and retrieves the user's permissions (a non-CRUD command). Because case sets
+are a CASEDB entity, `GEN_EPIX_APP_URL` must point to CASEDB. The test runs
+only when explicitly enabled.
 
 Its defaults match the `docker-compose.sql.idp.yml` stack of the
 [gen-epix-api](https://github.com/RIVM-bioinformatics/gen-epix-api)
@@ -141,7 +143,7 @@ Override the defaults to target another application or identity provider:
 
 | Variable | Default |
 | --- | --- |
-| `GEN_EPIX_APP_URL` | `http://localhost:8000` |
+| `GEN_EPIX_APP_URL` | `http://localhost:8000` (CASEDB) |
 | `GEN_EPIX_OIDC_DISCOVERY_URL` | `http://localhost:8080/.well-known/openid-configuration` |
 | `GEN_EPIX_CLIENT_ID` | `mock` |
 | `GEN_EPIX_CLIENT_SECRET` | `mock` |
