@@ -84,6 +84,32 @@ crud_update(
 crud_delete(app_url, access_token, "organization_sets", organization_set$id)
 ```
 
+## Use CRUD commands
+
+The package provides one constructor for each CRUD command exposed by
+commondb, casedb, seqdb, and omopdb. Like the Python API, a command carries
+an `operation` and its arguments. Constructing one does not send a request:
+
+```r
+cmd <- casedb_case_set_crud_command(
+    operation = "READ_ONE",
+    obj_ids = "case-set-id"
+)
+case_set <- execute_crud_command(case_db_url, access_token, cmd)
+```
+
+Use `objs` for create and update operations, and `query_filter` for a filtered
+`READ_ALL`. That operation can also set `return_id = TRUE` to request matching
+IDs. `READ_ALL` and `DELETE_ALL` accept `limit` and `offset`. Only operations
+with corresponding API routes can be executed. The entity catalog is in
+`inst/extdata/crud-commands.csv`; the API revision used to generate it is in
+`inst/extdata/crud-api-revision.txt`.
+
+To refresh the constructors after a backend change, run
+`python3 tools/generate_crud_commands.py` with the sibling `gen-epix-api`
+checkout available. Installing or using this R package does not require the
+backend checkout.
+
 ## Retrieve all cases from the command line
 
 After installing the package, the generic example script is available in the
