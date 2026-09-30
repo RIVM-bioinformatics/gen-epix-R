@@ -6,14 +6,16 @@ Authors@R:
     person("RIVM", email = "bioinformatics@rivm.nl",
            role = c("aut", "cre", "cph"))
 Description: Provides generic R clients for authenticated Gen-EpiX API
-    endpoints, including shared browser-login helpers and CASEDB case
-    retrieval and phylogenetic-tree requests.
+    endpoints, including browser and client-credentials login helpers,
+    generic CRUD requests, and CASEDB case retrieval and phylogenetic-tree
+    requests.
 License: file LICENSE
 URL: https://github.com/RIVM-bioinformatics/gen-epix-R
 BugReports: https://github.com/RIVM-bioinformatics/gen-epix-R/issues
 Encoding: UTF-8
 Imports:
-    httr2
+    httr2 (>= 1.1.0),
+    utils
 Suggests:
     chromote
     
