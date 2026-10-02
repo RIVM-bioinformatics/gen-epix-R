@@ -68,6 +68,53 @@ stopifnot(
     identical(tree_request$body$case_ids, case_ids)
 )
 
+distances_response <- list(list(marker = "preserved"))
+distances_request <- retrieve_seq_distances_by_cases(
+    base_url = "http://localhost:8000",
+    access_token = "test-token",
+    case_ids = case_ids,
+    genetic_distance_col_id = "distance-column-x",
+    case_type_id = case_type_id,
+    timeout_seconds = 12,
+    post_json = record_request
+)
+stopifnot(
+    identical(
+        distances_request$url,
+        "http://localhost:8000/v1/retrieve/seq_distances_by_cases"
+    ),
+    identical(
+        distances_request$body,
+        list(
+            case_type_id = case_type_id,
+            case_ids = case_ids,
+            genetic_distance_col_id = "distance-column-x",
+            filter_other_cases = TRUE
+        )
+    ),
+    identical(distances_request$access_token, "test-token"),
+    identical(distances_request$timeout_seconds, 12)
+)
+
+explicit_filter_request <- retrieve_seq_distances_by_cases(
+    base_url = "http://localhost:8000",
+    access_token = "test-token",
+    case_ids = case_ids,
+    genetic_distance_col_id = "distance-column-x",
+    case_type_id = case_type_id,
+    filter_other_cases = FALSE,
+    post_json = function(url, body, access_token, timeout_seconds) {
+        list(
+            result = record_request(url, body, access_token, timeout_seconds),
+            response = distances_response
+        )
+    }
+)
+stopifnot(
+    identical(explicit_filter_request$response, distances_response),
+    identical(explicit_filter_request$result$body$filter_other_cases, FALSE)
+)
+
 stopifnot(
     identical(
         commondb_url("http://localhost:8000/", "v1/retrieve"),
