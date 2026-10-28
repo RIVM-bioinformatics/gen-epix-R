@@ -3,6 +3,8 @@ if (requireNamespace("genepixR", quietly = TRUE)) {
     retrieve_cases_by_id <- genepixR::retrieve_cases_by_id
     retrieve_phylogenetic_tree_by_cases <-
         genepixR::retrieve_phylogenetic_tree_by_cases
+    retrieve_seq_distances_by_cases <-
+        genepixR::retrieve_seq_distances_by_cases
     commondb_url <- genepixR::commondb_url
     chromote_access_token_value <- genepixR:::chromote_access_token_value
     read_chromote_access_token_during_login <-
@@ -48,7 +50,7 @@ stopifnot(
     identical(cases_request$url, "http://localhost:8000/v1/retrieve/cases_by_ids"),
     identical(
         cases_request$body,
-        list(case_type_id = case_type_id, case_ids = case_ids)
+        list(case_type_id = case_type_id, case_ids = as.list(case_ids))
     )
 )
 
@@ -65,7 +67,7 @@ stopifnot(
     identical(tree_request$body$case_type_id, case_type_id),
     identical(tree_request$body$genetic_distance_col_id, "distance-column-x"),
     identical(tree_request$body$tree_algorithm_code, "SLINK"),
-    identical(tree_request$body$case_ids, case_ids)
+    identical(tree_request$body$case_ids, as.list(case_ids))
 )
 
 distances_response <- list(list(marker = "preserved"))
@@ -87,7 +89,7 @@ stopifnot(
         distances_request$body,
         list(
             case_type_id = case_type_id,
-            case_ids = case_ids,
+            case_ids = as.list(case_ids),
             genetic_distance_col_id = "distance-column-x",
             filter_other_cases = TRUE
         )
@@ -114,6 +116,38 @@ stopifnot(
     identical(explicit_filter_request$response, distances_response),
     identical(explicit_filter_request$result$body$filter_other_cases, FALSE)
 )
+
+# A single ID must stay a list so it is sent as a JSON array, not a string.
+single_case_ids <- "case-1"
+single_case_bodies <- list(
+    retrieve_cases_by_id(
+        base_url = "http://localhost:8000",
+        access_token = "test-token",
+        case_ids = single_case_ids,
+        case_type_id = case_type_id,
+        post_json = record_request
+    )$body,
+    retrieve_phylogenetic_tree_by_cases(
+        base_url = "http://localhost:8000",
+        access_token = "test-token",
+        case_ids = single_case_ids,
+        genetic_distance_col_id = "distance-column-x",
+        case_type_id = case_type_id,
+        post_json = record_request
+    )$body,
+    retrieve_seq_distances_by_cases(
+        base_url = "http://localhost:8000",
+        access_token = "test-token",
+        case_ids = single_case_ids,
+        genetic_distance_col_id = "distance-column-x",
+        case_type_id = case_type_id,
+        filter_other_cases = FALSE,
+        post_json = record_request
+    )$body
+)
+for (single_case_body in single_case_bodies) {
+    stopifnot(identical(single_case_body$case_ids, list("case-1")))
+}
 
 stopifnot(
     identical(

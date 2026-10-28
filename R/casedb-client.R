@@ -65,7 +65,8 @@ retrieve_cases_by_id <- function(
     timeout_seconds = 45,
     post_json = commondb_post_json
 ) {
-    body <- list(case_type_id = case_type_id, case_ids = case_ids)
+    # as.list() keeps a single ID a JSON array under auto_unbox.
+    body <- list(case_type_id = case_type_id, case_ids = as.list(case_ids))
     casedb_post(
         base_url,
         "/retrieve/cases_by_ids",
@@ -102,7 +103,7 @@ retrieve_seq_distances_by_cases <- function(
 ) {
     body <- list(
         case_type_id = case_type_id,
-        case_ids = case_ids,
+        case_ids = as.list(case_ids),
         genetic_distance_col_id = genetic_distance_col_id,
         filter_other_cases = filter_other_cases
     )
@@ -143,7 +144,7 @@ retrieve_phylogenetic_tree_by_cases <- function(
         case_type_id = case_type_id,
         genetic_distance_col_id = genetic_distance_col_id,
         tree_algorithm_code = tree_algorithm_code,
-        case_ids = case_ids
+        case_ids = as.list(case_ids)
     )
     casedb_post(
         base_url,
